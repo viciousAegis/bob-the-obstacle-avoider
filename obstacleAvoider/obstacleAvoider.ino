@@ -1,7 +1,5 @@
 #include <MotorDriver.h>
-#include <Servo.h> 
-
-
+#include <Servo.h>
 
 #define LEFT_MOTOR 3
 #define RIGHT_MOTOR 2
@@ -16,17 +14,17 @@
 #define RIGHT 1
 
 MotorDriver m;
-Servo myservo;   
+Servo myservo;
 
 int echoPin = A5;
 int triggerPin = A0;
-#define SOUND_SPEED 0.034 //in cm/micro second
+#define SOUND_SPEED 0.034 // in cm/micro second
 
 double distance = 0;
 
 void setup()
 {
-  myservo.attach(10);  
+  myservo.attach(10);
   myservo.write(90);
   delay(1000);
 
@@ -35,16 +33,13 @@ void setup()
 
 void loop()
 {
-    distance = getDistance();
-    if(distance < SAFE_DISTANCE)
-    {
-       avoidObstacle();
-    }
-    moveForward();
-
-  getDistance();
+  distance = getDistance();
+  if (distance < SAFE_DISTANCE)
+  {
+    avoidObstacle();
+  }
+  moveForward();
   delay(20);
-
 }
 
 void avoidObstacle()
@@ -54,7 +49,7 @@ void avoidObstacle()
   delay(400);
   int turn = meNoMoveCheck();
 
-  if(turn == LEFT)
+  if (turn == LEFT)
   {
     Serial.println("LEFT LEFT LEFT");
     turnLeft();
@@ -67,32 +62,32 @@ void avoidObstacle()
 }
 
 double getDistance()
-{ 
+{
   // Clears the trigPin
   digitalWrite(triggerPin, LOW);
   delayMicroseconds(2);
-  
+
   // Sets the trigPin on HIGH state for 10 micro seconds
   digitalWrite(triggerPin, HIGH);
-  
+
   delayMicroseconds(10);
   digitalWrite(triggerPin, LOW);
-  
+
   // Reads the echoPin, returns the sound wave travel time in microseconds
-  long duration = pulseIn(echoPin, HIGH,40000);
+  long duration = pulseIn(echoPin, HIGH, 40000);
 
   double distanceCm;
   Serial.println(duration);
 
-  
   // Calculate the distance
-  if(duration == 0){
+  if (duration == 0)
+  {
     distanceCm = 1000;
     Serial.println("No obstacle detected");
   }
   else
   {
-    distanceCm = duration * SOUND_SPEED/2;
+    distanceCm = duration * SOUND_SPEED / 2;
 
     // Prints the distance in the Serial Monitor
     Serial.print("Distance (cm): ");
@@ -107,38 +102,37 @@ double checkObstacle()
   int l_distance = lookLeft();
   int r_distance = lookRight();
 
-  if(l_distance > r_distance)
+  if (l_distance > r_distance)
     Serial.println("GOING LEFT");
-   else
+  else
     Serial.println("GOING RIGHT");
 
-  return l_distance > r_distance ? 1: 0;
+  return l_distance > r_distance ? 1 : 0;
 }
 
 double lookLeft()
 {
-  myservo.write(180); 
+  myservo.write(180);
   delay(90);
   int distance = getDistance();
-  myservo.write(90); 
+  myservo.write(90);
   delay(90);
   return distance;
-} // 
+} //
 
 double lookRight()
 {
-  myservo.write(0); 
+  myservo.write(0);
   delay(90);
   int distance = getDistance();
-  myservo.write(90); 
+  myservo.write(90);
   delay(90);
   return distance;
 }
 
-
 void meNoMove(int duration)
 {
-  for(int i = 0; i < duration / 2; i++)
+  for (int i = 0; i < duration / 2; i++)
   {
     m.motor(LEFT_MOTOR, FORWARD, TURN_SPEED);
     m.motor(RIGHT_MOTOR, FORWARD, TURN_SPEED);
@@ -147,7 +141,7 @@ void meNoMove(int duration)
     m.motor(RIGHT_MOTOR, BACKWARD, TURN_SPEED);
     delay(2);
   }
-  Serial.println("stopped"); 
+  Serial.println("stopped");
 }
 
 int meNoMoveCheck()
@@ -155,7 +149,7 @@ int meNoMoveCheck()
   int turn;
 
   int servoPosition = 90;
-  for(int i = 1; i <= 90; i++)
+  for (int i = 1; i <= 90; i++)
   {
     m.motor(LEFT_MOTOR, FORWARD, TURN_SPEED);
     m.motor(RIGHT_MOTOR, FORWARD, TURN_SPEED);
@@ -163,17 +157,16 @@ int meNoMoveCheck()
     m.motor(LEFT_MOTOR, BACKWARD, TURN_SPEED);
     m.motor(RIGHT_MOTOR, BACKWARD, TURN_SPEED);
     delay(1);
-    if(i % 9 == 0){
+    if (i % 9 == 0)
+    {
       servoPosition = servoPosition + 9;
       myservo.write(servoPosition);
     }
-    
-
   }
 
-  int left  = getDistance();
-  
-  for(int i = 1; i <= 90; i++)
+  int left = getDistance();
+
+  for (int i = 1; i <= 90; i++)
   {
     m.motor(LEFT_MOTOR, FORWARD, TURN_SPEED);
     m.motor(RIGHT_MOTOR, FORWARD, TURN_SPEED);
@@ -181,12 +174,13 @@ int meNoMoveCheck()
     m.motor(LEFT_MOTOR, BACKWARD, TURN_SPEED);
     m.motor(RIGHT_MOTOR, BACKWARD, TURN_SPEED);
     delay(1); // move from 90 to 0
-      if(i % 9 == 0){
+    if (i % 9 == 0)
+    {
       servoPosition = servoPosition - 9;
       myservo.write(servoPosition);
     }
   }
-  for(int i = 0; i < 90; i++)
+  for (int i = 0; i < 90; i++)
   {
     m.motor(LEFT_MOTOR, FORWARD, TURN_SPEED);
     m.motor(RIGHT_MOTOR, FORWARD, TURN_SPEED);
@@ -194,38 +188,38 @@ int meNoMoveCheck()
     m.motor(LEFT_MOTOR, BACKWARD, TURN_SPEED);
     m.motor(RIGHT_MOTOR, BACKWARD, TURN_SPEED);
     delay(1);
-      if(i % 9 == 0){
+    if (i % 9 == 0)
+    {
       servoPosition = servoPosition - 9;
       myservo.write(servoPosition);
     }
   }
 
   int right = getDistance();
-  for(int i = 1; i <= 90; i++)
+  for (int i = 1; i <= 90; i++)
   {
- 
+
     m.motor(LEFT_MOTOR, FORWARD, TURN_SPEED);
     m.motor(RIGHT_MOTOR, FORWARD, TURN_SPEED);
     delay(1);
     m.motor(LEFT_MOTOR, BACKWARD, TURN_SPEED);
     m.motor(RIGHT_MOTOR, BACKWARD, TURN_SPEED);
     delay(1);
-      if(i % 9 == 0){
+    if (i % 9 == 0)
+    {
       servoPosition = servoPosition + 9;
       myservo.write(servoPosition);
     }
   }
-  
-  return left > right ? LEFT  : RIGHT;
-}
 
+  return left > right ? LEFT : RIGHT;
+}
 
 int turnLeft()
 {
   m.motor(LEFT_MOTOR, BACKWARD, TURN_SPEED);
   m.motor(RIGHT_MOTOR, FORWARD, TURN_SPEED);
   delay(TURN_DELAY);
-
 }
 
 void turnRight()
@@ -233,12 +227,11 @@ void turnRight()
   m.motor(LEFT_MOTOR, FORWARD, TURN_SPEED);
   m.motor(RIGHT_MOTOR, BACKWARD, TURN_SPEED);
   delay(TURN_DELAY);
-
 }
 
 void moveForward()
 {
-  
+
   m.motor(LEFT_MOTOR, FORWARD, FORWARD_SPEED);
   m.motor(RIGHT_MOTOR, FORWARD, FORWARD_SPEED);
   Serial.println("fwd");
