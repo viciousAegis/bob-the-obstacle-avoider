@@ -5,10 +5,13 @@
 #define RIGHT_MOTOR 2
 #define TURN_SPEED 450
 #define STOP_SPEED 0
-#define TURN_DELAY 1000
+#define TURN_DELAY 400 
 #define FORWARD_SPEED 1000
 #define BACKWARD_SPEED 500
 #define SAFE_DISTANCE 25
+#define PROBE_ANGLE 90
+
+unsigned long long startTime;
 
 #define LEFT 0
 #define RIGHT 1
@@ -24,6 +27,7 @@ double distance = 0;
 
 void setup()
 {
+  startTime = millis();
   myservo.attach(10);
   myservo.write(90);
   delay(1000);
@@ -33,6 +37,17 @@ void setup()
 
 void loop()
 {
+  Serial.print("\t\t\t\t\t\t");
+  Serial.println(millis() - startTime);
+  if(millis() - startTime > 1000){
+    startTime = millis();
+    
+     Serial.print("PROBE HAHAHA   ");
+     
+     probe();
+     startTime = millis();
+     
+  }
   distance = getDistance();
   if (distance < SAFE_DISTANCE)
   {
@@ -44,6 +59,7 @@ void loop()
 
 void avoidObstacle()
 {
+  
   meNoMove(100);
   moveBackward();
   delay(400);
@@ -59,6 +75,8 @@ void avoidObstacle()
     Serial.println("RIGHT RIGHT RIGHT");
     turnRight();
   }
+
+  startTime = millis();
 }
 
 double getDistance()
@@ -77,7 +95,7 @@ double getDistance()
   long duration = pulseIn(echoPin, HIGH, 40000);
 
   double distanceCm;
-  Serial.println(duration);
+//  Serial.println(duration);
 
   // Calculate the distance
   if (duration == 0)
@@ -149,7 +167,7 @@ int meNoMoveCheck()
   int turn;
 
   int servoPosition = 90;
-  for (int i = 1; i <= 90; i++)
+  for (int i = 1; i <= PROBE_ANGLE*2; i++)
   {
     m.motor(LEFT_MOTOR, FORWARD, TURN_SPEED);
     m.motor(RIGHT_MOTOR, FORWARD, TURN_SPEED);
@@ -157,16 +175,16 @@ int meNoMoveCheck()
     m.motor(LEFT_MOTOR, BACKWARD, TURN_SPEED);
     m.motor(RIGHT_MOTOR, BACKWARD, TURN_SPEED);
     delay(1);
-    if (i % 9 == 0)
+    if (i % PROBE_ANGLE/5 == 0)
     {
-      servoPosition = servoPosition + 9;
+      servoPosition = servoPosition + PROBE_ANGLE/10;
       myservo.write(servoPosition);
     }
   }
 
   int left = getDistance();
 
-  for (int i = 1; i <= 90; i++)
+  for (int i = 1; i <= PROBE_ANGLE*2; i++)
   {
     m.motor(LEFT_MOTOR, FORWARD, TURN_SPEED);
     m.motor(RIGHT_MOTOR, FORWARD, TURN_SPEED);
@@ -174,13 +192,13 @@ int meNoMoveCheck()
     m.motor(LEFT_MOTOR, BACKWARD, TURN_SPEED);
     m.motor(RIGHT_MOTOR, BACKWARD, TURN_SPEED);
     delay(1); // move from 90 to 0
-    if (i % 9 == 0)
+    if (i % PROBE_ANGLE/5 == 0)
     {
-      servoPosition = servoPosition - 9;
+      servoPosition = servoPosition - PROBE_ANGLE/10;
       myservo.write(servoPosition);
     }
   }
-  for (int i = 0; i < 90; i++)
+  for (int i = 0; i < PROBE_ANGLE*2; i++)
   {
     m.motor(LEFT_MOTOR, FORWARD, TURN_SPEED);
     m.motor(RIGHT_MOTOR, FORWARD, TURN_SPEED);
@@ -188,15 +206,15 @@ int meNoMoveCheck()
     m.motor(LEFT_MOTOR, BACKWARD, TURN_SPEED);
     m.motor(RIGHT_MOTOR, BACKWARD, TURN_SPEED);
     delay(1);
-    if (i % 9 == 0)
+    if (i % PROBE_ANGLE/5 == 0)
     {
-      servoPosition = servoPosition - 9;
+      servoPosition = servoPosition - PROBE_ANGLE/10;
       myservo.write(servoPosition);
     }
   }
 
   int right = getDistance();
-  for (int i = 1; i <= 90; i++)
+  for (int i = 1; i <= PROBE_ANGLE*2; i++)
   {
 
     m.motor(LEFT_MOTOR, FORWARD, TURN_SPEED);
@@ -205,9 +223,9 @@ int meNoMoveCheck()
     m.motor(LEFT_MOTOR, BACKWARD, TURN_SPEED);
     m.motor(RIGHT_MOTOR, BACKWARD, TURN_SPEED);
     delay(1);
-    if (i % 9 == 0)
+    if (i % PROBE_ANGLE/5 == 0)
     {
-      servoPosition = servoPosition + 9;
+      servoPosition = servoPosition + PROBE_ANGLE/10;
       myservo.write(servoPosition);
     }
   }
@@ -242,4 +260,51 @@ void moveBackward()
   m.motor(LEFT_MOTOR, BACKWARD, BACKWARD_SPEED);
   m.motor(RIGHT_MOTOR, BACKWARD, BACKWARD_SPEED);
   Serial.println("bwd");
+}
+
+int checkDistanceInProbe(int probe_distance)
+{
+  startTime = millis();
+  if(probe_distance < SAFE_DISTANCE){
+      myservo.write(90);
+      delay(300);
+      Serial.println("AVOIDING OBSTACLE");
+      avoidObstacle();
+      
+      return 1;
+   }
+
+   return 0;
+}
+
+void probe(){
+
+  int servoPos = 90;
+  
+  for(int i = 1; i <= 4; i++){
+    
+    servoPos = servoPos + 15;
+    myservo.write(servoPos);
+    delay(150);
+    int probe_distance = getDistance();
+    Serial.println("PROBING LEFT");
+    if(checkDistanceInProbe(probe_distance)) return;
+    
+  }
+
+  myservo.write(90);
+  servoPos = 90;
+  delay(300);
+
+   for(int i = 1; i <= 4; i++){
+    servoPos = servoPos - 15;
+    myservo.write(servoPos);
+    delay(150);
+    int probe_distance = getDistance();
+    Serial.println("PROBING RIGHT");
+    if(checkDistanceInProbe(probe_distance)) return;
+  }
+
+  myservo.write(90);
+  delay(100);
 }
