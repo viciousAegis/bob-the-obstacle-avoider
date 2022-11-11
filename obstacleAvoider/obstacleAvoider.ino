@@ -1,6 +1,8 @@
 #include <MotorDriver.h>
 #include <Servo.h>
 
+
+
 #define LEFT_MOTOR 3
 #define RIGHT_MOTOR 2
 #define TURN_SPEED 450
@@ -12,6 +14,9 @@
 #define PROBE_ANGLE 90
 
 unsigned long long startTime;
+
+#define FORWARD_DELAY 20
+#define BACKWARD_DELAY 400
 
 #define LEFT 0
 #define RIGHT 1
@@ -25,6 +30,10 @@ int triggerPin = A0;
 
 double distance = 0;
 
+float x = 0;
+float y = 0;
+float angle = 0;
+
 void setup()
 {
   startTime = millis();
@@ -33,6 +42,14 @@ void setup()
   delay(1000);
 
   Serial.begin(9600);
+}
+
+void print_pos()
+{
+  Serial.print("x = ");
+  Serial.print(x);
+  Serial.print(" y = ");
+  Serial.println(y);
 }
 
 void loop()
@@ -54,7 +71,8 @@ void loop()
     avoidObstacle();
   }
   moveForward();
-  delay(20);
+  print_pos();
+  delay(FORWARD_DELAY);
 }
 
 void avoidObstacle()
@@ -62,7 +80,7 @@ void avoidObstacle()
   
   meNoMove(100);
   moveBackward();
-  delay(400);
+  delay(BACKWARD_DELAY);
   int turn = meNoMoveCheck();
 
   if (turn == LEFT)
@@ -235,6 +253,7 @@ int meNoMoveCheck()
 
 int turnLeft()
 {
+  angle += TURN_ANGLE;
   m.motor(LEFT_MOTOR, BACKWARD, TURN_SPEED);
   m.motor(RIGHT_MOTOR, FORWARD, TURN_SPEED);
   delay(TURN_DELAY);
@@ -242,6 +261,9 @@ int turnLeft()
 
 void turnRight()
 {
+  angle -= TURN_ANGLE;
+  x = x + TURN_SPEED*cos(angle*pi/180);
+  y = y + TURN_SPEED*sin(angle*pi/180);     
   m.motor(LEFT_MOTOR, FORWARD, TURN_SPEED);
   m.motor(RIGHT_MOTOR, BACKWARD, TURN_SPEED);
   delay(TURN_DELAY);
@@ -249,7 +271,8 @@ void turnRight()
 
 void moveForward()
 {
-
+  x = x + FORWARD_SPEED*FORWARD_DELAY*cos(angle*pi/180);
+  y = y + FORWARD_SPEED*FORWARD_DELAY*sin(angle*pi/180);
   m.motor(LEFT_MOTOR, FORWARD, FORWARD_SPEED);
   m.motor(RIGHT_MOTOR, FORWARD, FORWARD_SPEED);
   Serial.println("fwd");
@@ -257,6 +280,8 @@ void moveForward()
 
 void moveBackward()
 {
+  x = x - BACKWARD_SPEED*BACKWARD_DELAY*cos(angle*pi/180);
+  y = y - BACKWARD_SPEED*BACKWARD_DELAY*sin(angle*pi/180);
   m.motor(LEFT_MOTOR, BACKWARD, BACKWARD_SPEED);
   m.motor(RIGHT_MOTOR, BACKWARD, BACKWARD_SPEED);
   Serial.println("bwd");
