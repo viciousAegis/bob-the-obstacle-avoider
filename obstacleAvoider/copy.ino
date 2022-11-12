@@ -1,9 +1,5 @@
 #include <MotorDriver.h>
 #include <Servo.h>
-#include "WiFi.h"
-#include "HTTPClient.h"
-#include "time.h"
-#include <ArduinoJson.h>
 
 #define LEFT_MOTOR 3
 #define RIGHT_MOTOR 2
@@ -36,47 +32,12 @@ float x = 0;
 float y = 0;
 float angle = 0;
 
-char *wifi_ssid = "kriti";
-char *wifi_pwd = "abcd1234";
-int status = WL_IDLE_STATUS;
-
-String cse_ip = "127.0.0.1"; 
-String cse_port = "8080";
-String server = "http://" + cse_ip + ":" + cse_port + "/~/in-cse/in-name/";
-String ae = "BobMapping";
-String cnt = "node1";
-HttpClient Hclient = HttpClient(wifi, cse_ip, cse_port);
-
-void createCI(const String &val)
-{ // add the lines in step 3-6 inside this function
-    HTTPClient http;
-    http.begin(server + ae + "/" + cnt + "/");
-    http.addHeader("X-M2M-Origin", "admin:admin");
-    http.addHeader("Content-Type", "application/json;ty=4");
-    int code = http.POST("{\"m2m:cin\": {\"cnf\":\"application/json\",\"con\": \"" + String(val) + "\"}}"); 
-    // Check if the request has been sent and close the connection
-    Serial.println(code);
-    if (code == -1)
-    {
-        Serial.println("UNABLE TO CONNECT TO THE SERVER");
-    }
-    http.end();
-}
-
 void setup()
 {
   startTime = millis();
   myservo.attach(10);
   myservo.write(90);
   delay(1000);
-
-  WiFi.begin(wifi_ssid, wifi_pwd);
-  while (WiFi.status() != WL_CONNECTED)
-  {
-      delay(500);
-      Serial.print("Connecting...");
-  }
-  Serial.println("Connected");
 
   Serial.begin(9600);
 }
@@ -105,7 +66,6 @@ void loop()
   distance = getDistance();
   if (distance < SAFE_DISTANCE)
   {
-    createCI(distance);
     avoidObstacle();
   }
   moveForward();
