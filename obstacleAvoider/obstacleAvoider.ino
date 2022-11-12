@@ -14,7 +14,7 @@
 #define PROBE_ANGLE 90
 
 
-#define FORWARD_DELAY 400 //CHANGE IT BACK TO 20
+#define FORWARD_DELAY 20
 #define BACKWARD_DELAY 400
 
 #define LEFT 0
