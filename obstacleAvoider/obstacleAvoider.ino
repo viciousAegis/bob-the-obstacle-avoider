@@ -1,5 +1,7 @@
 #include <MotorDriver.h>
 #include <Servo.h>
+#include <WiFiNINA.h>
+#include <ArduinoHttpClient.h>
 
 #define LEFT_MOTOR 3
 #define RIGHT_MOTOR 2
@@ -12,7 +14,7 @@
 #define PROBE_ANGLE 90
 
 
-#define FORWARD_DELAY 20
+#define FORWARD_DELAY 400 //CHANGE IT BACK TO 20
 #define BACKWARD_DELAY 400
 
 #define LEFT 0
@@ -37,6 +39,65 @@ float x = 0;
 float y = 0;
 float angle = 0;
 
+//M2M VALUES #################
+char ssid[] = "no";   // your network SSID (name)
+char pass[] = "13577531";   // your network password
+
+int status = WL_IDLE_STATUS;      //connection status
+WiFiServer server(80);            //server socket
+
+char cse_ip[] = "esw-onem2m.iiit.ac.in";
+int cse_port = 443;
+
+WiFiClient wifi;
+String cse_server = "http://" + String(cse_ip) + ":" + String(cse_port) + "/~/in-cse/in-name/";
+HttpClient Hclient = HttpClient(wifi, cse_ip, cse_port);
+WiFiClient client = server.available();
+//M2M VALUES #################
+
+void connect_WiFi() {
+  // Connect to WiFi network
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
+  WiFi.begin(ssid, pass);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  // Print local IP address and start web server
+  Serial.println("");
+  Serial.println("WiFi connected.");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+}
+
+void createCI(String val) {
+
+  String body = "{\"m2m:cin\": {\"lbl\": [ \"Team-30\" ],\"con\": \"" + String(val) + "\"}}";
+  Hclient.beginRequest();
+  //  Hclient.post("/~/in-cse/cnt-313720922/");
+
+  // clg om2m
+  Hclient.post("/~/in-cse/in-name/Team-30/Node-1/UV/coordinates/");
+  Hclient.sendHeader("Content-Length", body.length());
+
+  // clg m2m
+  Hclient.sendHeader("X-M2M-Origin", "cYRadM:Mi1kta");
+
+  Hclient.sendHeader("Content-Type", "application/json;ty=4");
+  Hclient.sendHeader("Connection", "keep-alive");
+  Hclient.beginBody();
+  //  String body = "m2m:cin: {lbl: [ \"Team-13\" ],con: \"" + String(val)+ "\"}";
+  Serial.println(body);
+  Hclient.print(body);
+  Hclient.endRequest();
+  int status = Hclient.responseStatusCode();
+  String responseBody = Hclient.responseBody();
+  Serial.println(status);
+  Serial.println(responseBody);
+}
+
+
 void setup()
 {
   startTime = millis();
@@ -45,6 +106,8 @@ void setup()
   delay(1000);
 
   Serial.begin(9600);
+
+  connect_WiFi();
 }
 
 void print_pos()
@@ -53,6 +116,8 @@ void print_pos()
   Serial.print(x / 1000000);
   Serial.print("y = ");
   Serial.println(y / 100000);
+  String data = String(x / 1000000) + ":" + String(y / 1000000);
+  createCI(data);
 }
 
 void loop()
@@ -96,7 +161,6 @@ void avoidObstacle()
     Serial.println("RIGHT RIGHT RIGHT");
     turnRight();
   }
-
   startTime = millis();
 }
 
