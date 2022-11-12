@@ -11,19 +11,18 @@
 #define SAFE_DISTANCE 25
 #define PROBE_ANGLE 90
 
-#define TURN_ANGLE 45
-
-#define DELAY_FOR_90 400
-
-float pi = 3.1415;
-
-unsigned long long startTime;
 
 #define FORWARD_DELAY 20
 #define BACKWARD_DELAY 400
 
 #define LEFT 0
 #define RIGHT 1
+
+#define TURN_ANGLE 45
+
+float pi = 3.1415;
+
+unsigned long long startTime;
 
 MotorDriver m;
 Servo myservo;
