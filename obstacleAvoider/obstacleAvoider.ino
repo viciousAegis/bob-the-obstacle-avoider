@@ -1,7 +1,7 @@
 #include <MotorDriver.h>
 #include <Servo.h>
-#include "WiFi.h"
-#include "HTTPClient.h"
+#include <WiFiNINA.h>
+#include <ArduinoHttpClient.h>
 #include "time.h"
 #include <ArduinoJson.h>
 
@@ -39,13 +39,15 @@ float angle = 0;
 char *wifi_ssid = "kriti";
 char *wifi_pwd = "abcd1234";
 int status = WL_IDLE_STATUS;
-
+WiFiServer server(80);
 String cse_ip = "127.0.0.1"; 
 String cse_port = "8080";
 String server = "http://" + cse_ip + ":" + cse_port + "/~/in-cse/in-name/";
 String ae = "BobMapping";
 String cnt = "node1";
+WiFiClient wifi;
 HttpClient Hclient = HttpClient(wifi, cse_ip, cse_port);
+WiFiClient client = server.available();
 
 void createCI(const String &val)
 { // add the lines in step 3-6 inside this function
@@ -70,7 +72,12 @@ void setup()
   myservo.write(90);
   delay(1000);
 
-  WiFi.begin(wifi_ssid, wifi_pwd);
+  enable_WiFi();
+  connect_WiFi();
+
+  server.begin()
+  printWifiStatus();
+
   while (WiFi.status() != WL_CONNECTED)
   {
       delay(500);
@@ -91,6 +98,8 @@ void print_pos()
 
 void loop()
 {
+  client = server.available();
+  
   Serial.print("\t\t\t\t\t\t");
   Serial.println(millis() - startTime);
   if(millis() - startTime > 1000){
@@ -370,4 +379,51 @@ void probe(){
 
   myservo.write(90);
   delay(100);
+}
+
+void enable_WiFi() {
+  // check for the WiFi module:
+  if (WiFi.status() == WL_NO_MODULE) {
+    Serial.println("Communication with WiFi module failed!");
+    // don't continue
+    while (true);
+  }
+
+  String fv = WiFi.firmwareVersion();
+  if (fv < "1.0.0") {
+    Serial.println("Please upgrade the firmware");
+  }
+}
+
+void connect_WiFi() {
+  // attempt to connect to Wifi network:
+  while (status != WL_CONNECTED) {
+    Serial.print("Attempting to connect to SSID: ");
+    Serial.println(ssid);
+    // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
+    status = WiFi.begin(ssid, pass);
+
+    // wait 10 seconds for connection:
+    delay(10000);
+  }
+}
+
+void printWifiStatus() {
+  // print the SSID of the network you're attached to:
+  Serial.print("SSID: ");
+  Serial.println(WiFi.SSID());
+
+  // print your board's IP address:
+  IPAddress ip = WiFi.localIP();
+  Serial.print("IP Address: ");
+  Serial.println(ip);
+
+  // print the received signal strength:
+  long rssi = WiFi.RSSI();
+  Serial.print("signal strength (RSSI):");
+  Serial.print(rssi);
+  Serial.println(" dBm");
+
+  Serial.print("To see this page in action, open a browser to http://");
+  Serial.println(ip);
 }
